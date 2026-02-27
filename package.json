@@ -1,0 +1,22 @@
+{
+  "name": "outlook-cli",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "outlook": "./bin/outlook.ts"
+  },
+  "scripts": {
+    "start": "bun run bin/outlook.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "citty": "^0.2.1",
+    "console-table-printer": "^2.15.0"
+  }
+}
