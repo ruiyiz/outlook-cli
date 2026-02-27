@@ -14,6 +14,7 @@ const create = defineCommand({
     body: { type: "string", description: "Event body/notes", default: "" },
     attendees: { type: "string", description: "Attendee emails (semicolon-separated)", default: "" },
     "all-day": { type: "boolean", description: "All day event", default: false },
+    calendar: { type: "string", description: "Calendar name (default: primary calendar)", default: "" },
     json: { type: "boolean", description: "Output as JSON", default: false },
   },
   async run({ args }) {
@@ -26,6 +27,7 @@ const create = defineCommand({
       body: args.body,
       attendees: args.attendees,
       allDay: args["all-day"],
+      calendarName: args.calendar,
     });
 
     if (!result.success) {

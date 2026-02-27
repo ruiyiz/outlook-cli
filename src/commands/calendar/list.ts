@@ -15,6 +15,7 @@ const list = defineCommand({
     week: { type: "boolean", description: "Show this week's events", default: false },
     from: { type: "string", description: "Start date", default: "" },
     to: { type: "string", description: "End date", default: "" },
+    calendar: { type: "string", description: "Calendar name (default: primary calendar)", default: "" },
     json: { type: "boolean", description: "Output as JSON", default: false },
   },
   async run({ args }) {
@@ -37,7 +38,7 @@ const list = defineCommand({
     const result = await executor.execute<CalendarEvent | CalendarEvent[]>(
       "calendar",
       "list-events",
-      { fromDate, toDate }
+      { fromDate, toDate, calendarName: args.calendar }
     );
 
     if (!result.success) {

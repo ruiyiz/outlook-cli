@@ -11,6 +11,7 @@ const calendar = defineCommand({
     create: () => import("./create").then((m) => m.default),
     update: () => import("./update").then((m) => m.default),
     delete: () => import("./delete").then((m) => m.default),
+    calendars: () => import("./calendars").then((m) => m.default),
   },
 });
 
