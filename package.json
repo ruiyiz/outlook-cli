@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "bin": {
-    "outlook": "./bin/outlook.ts"
+    "outlook": "./bin/outlook.ts",
+    "outlook-daemon": "./src/daemon/server.ts"
   },
   "scripts": {
     "start": "bun run bin/outlook.ts"

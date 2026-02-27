@@ -2,4 +2,5 @@
 import { runMain } from "citty";
 import main from "../src/index";
 
-runMain(main);
+await runMain(main);
+process.exit(0);
