@@ -6,6 +6,8 @@ import { existsSync, openSync, closeSync } from "fs";
 import { dirname, join } from "path";
 
 export class DaemonExecutor implements IOutlookExecutor {
+  private startPromise: Promise<void> | null = null;
+
   private send<T>(
     category: string,
     name: string,
@@ -93,8 +95,12 @@ export class DaemonExecutor implements IOutlookExecutor {
     try {
       return await this.send<T>(scriptCategory, scriptName, params);
     } catch {
-      await this.startDaemon();
-      await this.waitForSocket();
+      if (!this.startPromise) {
+        this.startPromise = this.startDaemon()
+          .then(() => this.waitForSocket())
+          .finally(() => { this.startPromise = null; });
+      }
+      await this.startPromise;
       return await this.send<T>(scriptCategory, scriptName, params);
     }
   }
