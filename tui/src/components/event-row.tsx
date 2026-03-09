@@ -17,7 +17,7 @@ interface Props {
 
 export function EventRow({ event, isCursor }: Props) {
   const { stdout } = useStdout();
-  const cols = (stdout.columns ?? 80) - 1;
+  const cols = (stdout.columns ?? 80) - 2; // -2 for paddingX={1} in parent
 
   const TIME_W = 12;
   const LOC_W = 18;

@@ -20,7 +20,7 @@ function dayLabel(iso: string): string {
   return d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
 }
 
-export function CalendarView({ events, loading, error }: CalendarData) {
+export function CalendarView({ events, loading, error, viewportHeight }: CalendarData & { viewportHeight: number }) {
   const { state, dispatch } = useAppState();
 
   const clamp = useCallback(
@@ -34,16 +34,59 @@ export function CalendarView({ events, loading, error }: CalendarData) {
     }
   }, [state.cursorIndex, events.length, dispatch]);
 
-  useInput((input, key) => {
-    if (input === "j" || key.downArrow) {
-      dispatch({ type: "SET_CURSOR", index: clamp(state.cursorIndex + 1) });
-    } else if (input === "k" || key.upArrow) {
-      dispatch({ type: "SET_CURSOR", index: clamp(state.cursorIndex - 1) });
-    } else if (key.pageUp) {
-      dispatch({ type: "SET_CURSOR", index: 0 });
-    } else if (key.pageDown) {
-      dispatch({ type: "SET_CURSOR", index: clamp(events.length - 1) });
+  // Group events by day for section headers (safe to compute even when empty)
+  let lastDay = "";
+  const rows: Array<{ type: "header"; label: string } | { type: "event"; event: CalendarEvent; idx: number }> = [];
+  events.forEach((event, idx) => {
+    const dk = dayKey(event.Start);
+    if (dk !== lastDay) {
+      rows.push({ type: "header", label: dayLabel(event.Start) });
+      lastDay = dk;
     }
+    rows.push({ type: "event", event, idx });
+  });
+
+  // Compute rendered line numbers for each rows[] entry (non-first headers consume an extra margin line)
+  let line = 0;
+  const rowLines: number[] = [];
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i].type === "header" && i > 0) line += 1; // margin line
+    rowLines.push(line);
+    line += 1;
+  }
+  const totalRenderedRows = line;
+
+  // Find the rendered line of the cursor event
+  const cursorRowIndex = rows.findIndex((r) => r.type === "event" && r.idx === state.cursorIndex);
+  const cursorRow = cursorRowIndex >= 0 ? rowLines[cursorRowIndex] : 0;
+
+  function adjustScroll(cr: number, offset: number): number {
+    let next = offset;
+    if (cr < next) next = cr;
+    if (cr >= next + viewportHeight) next = cr - viewportHeight + 1;
+    return Math.max(0, Math.min(next, Math.max(0, totalRenderedRows - viewportHeight)));
+  }
+
+  const scrollOffset = adjustScroll(cursorRow, state.scrollOffset);
+
+  useInput((input, key) => {
+    let newCursor = state.cursorIndex;
+    if (input === "j" || key.downArrow) {
+      newCursor = clamp(state.cursorIndex + 1);
+    } else if (input === "k" || key.upArrow) {
+      newCursor = clamp(state.cursorIndex - 1);
+    } else if (key.pageUp) {
+      newCursor = clamp(state.cursorIndex - viewportHeight);
+    } else if (key.pageDown) {
+      newCursor = clamp(state.cursorIndex + viewportHeight);
+    } else {
+      return;
+    }
+    // Find rendered line for new cursor position
+    const newCursorRowIndex = rows.findIndex((r) => r.type === "event" && r.idx === newCursor);
+    const newCursorRow = newCursorRowIndex >= 0 ? rowLines[newCursorRowIndex] : 0;
+    dispatch({ type: "SET_CURSOR", index: newCursor });
+    dispatch({ type: "SET_SCROLL", offset: adjustScroll(newCursorRow, state.scrollOffset) });
   });
 
   if (error) {
@@ -70,32 +113,37 @@ export function CalendarView({ events, loading, error }: CalendarData) {
     );
   }
 
-  // Group events by day for section headers
-  let lastDay = "";
-  const rows: Array<{ type: "header"; label: string } | { type: "event"; event: CalendarEvent; idx: number }> = [];
-  events.forEach((event, idx) => {
-    const dk = dayKey(event.Start);
-    if (dk !== lastDay) {
-      rows.push({ type: "header", label: dayLabel(event.Start) });
-      lastDay = dk;
+  // Render only rows whose rendered lines fall within the visible window
+  const visibleElements: React.ReactNode[] = [];
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const rowLine = rowLines[i];
+
+    if (row.type === "header" && i > 0) {
+      const marginLine = rowLine - 1;
+      if (marginLine >= scrollOffset && marginLine < scrollOffset + viewportHeight) {
+        visibleElements.push(<Box key={`margin-${i}`}><Text> </Text></Box>);
+      }
     }
-    rows.push({ type: "event", event, idx });
-  });
+
+    if (rowLine >= scrollOffset && rowLine < scrollOffset + viewportHeight) {
+      if (row.type === "header") {
+        visibleElements.push(
+          <Box key={`h-${i}`}>
+            <Text bold color={theme.accent as any}>{row.label}</Text>
+          </Box>
+        );
+      } else {
+        visibleElements.push(
+          <EventRow key={row.event.EntryID} event={row.event} isCursor={row.idx === state.cursorIndex} />
+        );
+      }
+    }
+  }
 
   return (
     <Box flexDirection="column" paddingX={1}>
-      {rows.map((row, i) => {
-        if (row.type === "header") {
-          return (
-            <Box key={`h-${i}`} marginTop={i > 0 ? 1 : 0}>
-              <Text bold color={theme.accent as any}>{row.label}</Text>
-            </Box>
-          );
-        }
-        return (
-          <EventRow key={row.event.EntryID} event={row.event} isCursor={row.idx === state.cursorIndex} />
-        );
-      })}
+      {visibleElements}
     </Box>
   );
 }

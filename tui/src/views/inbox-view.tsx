@@ -4,7 +4,14 @@ import { useAppState } from "../context.ts";
 import { MailRow } from "../components/mail-row.tsx";
 import type { InboxData } from "../hooks/use-inbox.ts";
 
-export function InboxView({ messages, loading, error }: InboxData) {
+function adjustScroll(cursor: number, offset: number, viewport: number, total: number): number {
+  let next = offset;
+  if (cursor < next) next = cursor;
+  if (cursor >= next + viewport) next = cursor - viewport + 1;
+  return Math.max(0, Math.min(next, Math.max(0, total - viewport)));
+}
+
+export function InboxView({ messages, loading, error, viewportHeight }: InboxData & { viewportHeight: number }) {
   const { state, dispatch } = useAppState();
 
   const clamp = useCallback(
@@ -15,20 +22,30 @@ export function InboxView({ messages, loading, error }: InboxData) {
   useEffect(() => {
     if (messages.length > 0 && state.cursorIndex >= messages.length) {
       dispatch({ type: "SET_CURSOR", index: 0 });
+      dispatch({ type: "SET_SCROLL", offset: 0 });
     }
   }, [state.cursorIndex, messages.length, dispatch]);
 
+  // Both cursor and scroll are dispatched together inside Ink's batchedUpdates,
+  // so they produce a single re-render with no intermediate frames.
   useInput((input, key) => {
+    let newCursor = state.cursorIndex;
     if (input === "j" || key.downArrow) {
-      dispatch({ type: "SET_CURSOR", index: clamp(state.cursorIndex + 1) });
+      newCursor = clamp(state.cursorIndex + 1);
     } else if (input === "k" || key.upArrow) {
-      dispatch({ type: "SET_CURSOR", index: clamp(state.cursorIndex - 1) });
+      newCursor = clamp(state.cursorIndex - 1);
     } else if (key.pageUp) {
-      dispatch({ type: "SET_CURSOR", index: 0 });
+      newCursor = clamp(state.cursorIndex - viewportHeight);
     } else if (key.pageDown) {
-      dispatch({ type: "SET_CURSOR", index: clamp(messages.length - 1) });
+      newCursor = clamp(state.cursorIndex + viewportHeight);
+    } else {
+      return;
     }
+    dispatch({ type: "SET_CURSOR", index: newCursor });
+    dispatch({ type: "SET_SCROLL", offset: adjustScroll(newCursor, state.scrollOffset, viewportHeight, messages.length) });
   });
+
+  const scrollOffset = adjustScroll(state.cursorIndex, state.scrollOffset, viewportHeight, messages.length);
 
   if (error) {
     return (
@@ -54,10 +71,12 @@ export function InboxView({ messages, loading, error }: InboxData) {
     );
   }
 
+  const visible = messages.slice(scrollOffset, scrollOffset + viewportHeight);
+
   return (
     <Box flexDirection="column" paddingX={1}>
-      {messages.map((msg, i) => (
-        <MailRow key={msg.EntryID} message={msg} isCursor={i === state.cursorIndex} />
+      {visible.map((msg, i) => (
+        <MailRow key={msg.EntryID} message={msg} isCursor={(scrollOffset + i) === state.cursorIndex} />
       ))}
     </Box>
   );

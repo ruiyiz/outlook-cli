@@ -14,7 +14,7 @@ export function Header({ unreadCount, loading }: Props) {
   const inboxLabel = unreadCount > 0 ? ` Inbox (${unreadCount}) ` : " Inbox ";
 
   return (
-    <Box borderStyle="single" borderLeft={false} borderRight={false} paddingX={1} gap={1} marginBottom={1}>
+    <Box borderStyle="single" borderLeft={false} borderRight={false} paddingX={1}>
       {isInbox ? (
         <Text bold backgroundColor={theme.accent} color={theme.accentFg}>{inboxLabel}</Text>
       ) : (

@@ -7,13 +7,14 @@ interface Props {
   view: ViewName;
   lastRefresh: Date | null;
   loading: boolean;
+  lastModified: Date;
 }
 
 function h(key: string, desc: string) {
   return { key, desc };
 }
 
-export function Footer({ view, lastRefresh, loading }: Props) {
+export function Footer({ view, lastRefresh, loading, lastModified }: Props) {
   const tabDest = view === "inbox" ? "calendar" : "inbox";
   const hints = [
     h("j/k", "move"),
@@ -27,6 +28,8 @@ export function Footer({ view, lastRefresh, loading }: Props) {
     : lastRefresh
     ? `↻ ${lastRefresh.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
     : "";
+
+  const buildStr = `src ${lastModified.toLocaleString([], { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" })}`;
 
   return (
     <Box
@@ -43,11 +46,10 @@ export function Footer({ view, lastRefresh, loading }: Props) {
           <Text dimColor> {hint.desc}</Text>
         </Box>
       ))}
-      {refreshStr && (
-        <Box flexGrow={1} justifyContent="flex-end">
-          <Text dimColor>{refreshStr}</Text>
-        </Box>
-      )}
+      <Box flexGrow={1} justifyContent="flex-end" gap={2}>
+        {refreshStr && <Text dimColor>{refreshStr}</Text>}
+        <Text dimColor>{buildStr}</Text>
+      </Box>
     </Box>
   );
 }

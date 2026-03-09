@@ -9,7 +9,7 @@ import { CalendarView } from "./views/calendar-view.tsx";
 import { useInbox } from "./hooks/use-inbox.ts";
 import { useCalendar } from "./hooks/use-calendar.ts";
 
-export function App() {
+export function App({ lastModified }: { lastModified: Date }) {
   const { exit } = useApp();
   const { stdout } = useStdout();
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -36,6 +36,9 @@ export function App() {
 
   const currentLoading = state.view === "inbox" ? inbox.loading : calendar.loading;
   const currentLastRefresh = state.view === "inbox" ? inbox.lastRefresh : calendar.lastRefresh;
+  // header: borderTop(1) + content(1) + borderBottom(1) = 3
+  // footer: borderTop(1) + content(1) = 2
+  const viewportHeight = Math.max(1, (stdout.rows ?? 24) - 5);
 
   return (
     <AppContext.Provider value={{ state, dispatch }}>
@@ -43,12 +46,12 @@ export function App() {
         <Header unreadCount={unreadCount} loading={currentLoading} />
         <Box flexDirection="column" flexGrow={1} overflow="hidden">
           {state.view === "inbox" ? (
-            <InboxView {...inbox} />
+            <InboxView {...inbox} viewportHeight={viewportHeight} />
           ) : (
-            <CalendarView {...calendar} />
+            <CalendarView {...calendar} viewportHeight={viewportHeight} />
           )}
         </Box>
-        <Footer view={state.view} lastRefresh={currentLastRefresh} loading={currentLoading} />
+        <Footer view={state.view} lastRefresh={currentLastRefresh} loading={currentLoading} lastModified={lastModified} />
       </Box>
     </AppContext.Provider>
   );

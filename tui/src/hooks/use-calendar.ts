@@ -29,6 +29,7 @@ export function useCalendar(): CalendarData {
       const result = await executor.execute<CalendarEvent | CalendarEvent[]>("calendar", "list-events", {
         fromDate,
         toDate,
+        calendarName: "",
       });
       if (result.success) {
         const evts = Array.isArray(result.data) ? result.data : result.data ? [result.data] : [];

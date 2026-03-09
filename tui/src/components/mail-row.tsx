@@ -22,7 +22,7 @@ interface Props {
 
 export function MailRow({ message, isCursor }: Props) {
   const { stdout } = useStdout();
-  const cols = (stdout.columns ?? 80) - 1;
+  const cols = (stdout.columns ?? 80) - 2; // -2 for paddingX={1} in parent
 
   const FROM_W = 20;
   const TIME_W = 10;
