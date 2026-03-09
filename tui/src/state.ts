@@ -1,3 +1,5 @@
+import type { MailMessage } from "@cli/types/mail.ts";
+
 export type ViewName = "inbox" | "calendar";
 
 export interface AppState {
@@ -6,12 +8,18 @@ export interface AppState {
   cursorMemory: Partial<Record<ViewName, number>>;
   scrollOffset: number;
   scrollMemory: Partial<Record<ViewName, number>>;
+  readingEntryId: string | null;
+  readingScrollOffset: number;
+  readingThreadMessages: MailMessage[];
 }
 
 export type Action =
   | { type: "SWITCH_VIEW" }
   | { type: "SET_CURSOR"; index: number }
-  | { type: "SET_SCROLL"; offset: number };
+  | { type: "SET_SCROLL"; offset: number }
+  | { type: "OPEN_READING"; entryId: string; threadMessages: MailMessage[] }
+  | { type: "CLOSE_READING" }
+  | { type: "SET_READING_SCROLL"; offset: number };
 
 export const initialState: AppState = {
   view: "inbox",
@@ -19,6 +27,9 @@ export const initialState: AppState = {
   cursorMemory: {},
   scrollOffset: 0,
   scrollMemory: {},
+  readingEntryId: null,
+  readingScrollOffset: 0,
+  readingThreadMessages: [],
 };
 
 export function reducer(state: AppState, action: Action): AppState {
@@ -40,6 +51,17 @@ export function reducer(state: AppState, action: Action): AppState {
       return { ...state, cursorIndex: action.index };
     case "SET_SCROLL":
       return { ...state, scrollOffset: action.offset };
+    case "OPEN_READING":
+      return {
+        ...state,
+        readingEntryId: action.entryId,
+        readingScrollOffset: 0,
+        readingThreadMessages: action.threadMessages,
+      };
+    case "CLOSE_READING":
+      return { ...state, readingEntryId: null, readingScrollOffset: 0, readingThreadMessages: [] };
+    case "SET_READING_SCROLL":
+      return { ...state, readingScrollOffset: action.offset };
     default:
       return state;
   }

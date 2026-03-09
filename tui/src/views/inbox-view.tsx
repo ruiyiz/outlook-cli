@@ -37,7 +37,7 @@ function buildRows(
   return rows;
 }
 
-export function InboxView({ threads, loading, error, viewportHeight }: Pick<InboxData, "threads" | "loading" | "error"> & { viewportHeight: number }) {
+export function InboxView({ threads, loading, error, viewportHeight, isActive }: Pick<InboxData, "threads" | "loading" | "error"> & { viewportHeight: number; isActive: boolean }) {
   const { state, dispatch } = useAppState();
   const [expandedThreads, setExpandedThreads] = useState<Set<string>>(new Set());
   const [loadedConversations, setLoadedConversations] = useState<Map<string, MailMessage[]>>(new Map());
@@ -54,11 +54,12 @@ export function InboxView({ threads, loading, error, viewportHeight }: Pick<Inbo
   );
 
   useEffect(() => {
+    if (!isActive) return;
     if (totalRows > 0 && state.cursorIndex >= totalRows) {
       dispatch({ type: "SET_CURSOR", index: 0 });
       dispatch({ type: "SET_SCROLL", offset: 0 });
     }
-  }, [state.cursorIndex, totalRows, dispatch]);
+  }, [isActive, state.cursorIndex, totalRows, dispatch]);
 
   const fetchConversation = useCallback(async (thread: ThreadedMessage) => {
     if (loadingRef.current.has(thread.conversationId)) return;
@@ -96,6 +97,16 @@ export function InboxView({ threads, loading, error, viewportHeight }: Pick<Inbo
 
     if (key.return) {
       const row = rows[state.cursorIndex];
+      if (row?.type === "thread" && row.thread.messageCount === 1) {
+        const msgs = loadedConversations.get(row.thread.conversationId) ?? row.thread.messages;
+        dispatch({ type: "OPEN_READING", entryId: row.thread.latestEntryID, threadMessages: msgs });
+        return;
+      }
+      if (row?.type === "child") {
+        const msgs = loadedConversations.get(row.thread.conversationId) ?? row.thread.messages;
+        dispatch({ type: "OPEN_READING", entryId: row.message.EntryID, threadMessages: msgs });
+        return;
+      }
       if (row?.type === "thread" && row.thread.messageCount > 1) {
         const id = row.thread.conversationId;
         const isExpanded = expandedThreads.has(id);
@@ -126,7 +137,7 @@ export function InboxView({ threads, loading, error, viewportHeight }: Pick<Inbo
 
     dispatch({ type: "SET_CURSOR", index: newCursor });
     dispatch({ type: "SET_SCROLL", offset: adjustScroll(newCursor, state.scrollOffset) });
-  });
+  }, { isActive });
 
   const scrollOffset = adjustScroll(state.cursorIndex, state.scrollOffset);
 

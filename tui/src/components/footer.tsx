@@ -8,21 +8,24 @@ interface Props {
   lastRefresh: Date | null;
   loading: boolean;
   lastModified: Date;
+  isReading: boolean;
 }
 
 function h(key: string, desc: string) {
   return { key, desc };
 }
 
-export function Footer({ view, lastRefresh, loading, lastModified }: Props) {
+export function Footer({ view, lastRefresh, loading, lastModified, isReading }: Props) {
   const tabDest = view === "inbox" ? "calendar" : "inbox";
-  const hints = [
-    h("j/k", "move"),
-    ...(view === "inbox" ? [h("Enter", "expand")] : []),
-    h("Tab", tabDest),
-    h("r", "refresh"),
-    h("^Q", "quit"),
-  ];
+  const hints = isReading
+    ? [h("j/k", "scroll"), h("Esc/q", "back")]
+    : [
+        h("j/k", "move"),
+        ...(view === "inbox" ? [h("Enter", "open/expand")] : []),
+        h("Tab", tabDest),
+        h("r", "refresh"),
+        h("^Q", "quit"),
+      ];
 
   const refreshStr = loading
     ? "syncing…"

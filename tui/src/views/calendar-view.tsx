@@ -20,7 +20,7 @@ function dayLabel(iso: string): string {
   return d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
 }
 
-export function CalendarView({ events, loading, error, viewportHeight }: CalendarData & { viewportHeight: number }) {
+export function CalendarView({ events, loading, error, viewportHeight, isActive }: CalendarData & { viewportHeight: number; isActive: boolean }) {
   const { state, dispatch } = useAppState();
 
   const clamp = useCallback(
@@ -29,10 +29,11 @@ export function CalendarView({ events, loading, error, viewportHeight }: Calenda
   );
 
   useEffect(() => {
+    if (!isActive) return;
     if (events.length > 0 && state.cursorIndex >= events.length) {
       dispatch({ type: "SET_CURSOR", index: 0 });
     }
-  }, [state.cursorIndex, events.length, dispatch]);
+  }, [isActive, state.cursorIndex, events.length, dispatch]);
 
   // Group events by day for section headers (safe to compute even when empty)
   let lastDay = "";
@@ -87,7 +88,7 @@ export function CalendarView({ events, loading, error, viewportHeight }: Calenda
     const newCursorRow = newCursorRowIndex >= 0 ? rowLines[newCursorRowIndex] : 0;
     dispatch({ type: "SET_CURSOR", index: newCursor });
     dispatch({ type: "SET_SCROLL", offset: adjustScroll(newCursorRow, state.scrollOffset) });
-  });
+  }, { isActive });
 
   if (error) {
     return (

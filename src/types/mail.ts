@@ -6,6 +6,7 @@ export interface MailMessage {
   ReceivedTime: string;
   Body: string;
   HTMLBody?: string;
+  BodyFormat?: number;
   Unread: boolean;
   Importance: number;
   HasAttachments: boolean;
