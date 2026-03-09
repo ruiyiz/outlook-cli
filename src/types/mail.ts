@@ -15,6 +15,21 @@ export interface MailMessage {
   CC?: string;
   BCC?: string;
   FolderPath?: string;
+  ConversationID?: string;
+  ConversationTopic?: string;
+}
+
+export interface ThreadedMessage {
+  conversationId: string;
+  conversationTopic: string;
+  latestEntryID: string;
+  latestSenderName: string;
+  latestReceivedTime: string;
+  messageCount: number;
+  hasUnread: boolean;
+  hasAttachments: boolean;
+  importance: number;
+  messages: MailMessage[];
 }
 
 export interface AttachmentInfo {

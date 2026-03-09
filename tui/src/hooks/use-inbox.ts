@@ -1,12 +1,14 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { createExecutor } from "@cli/executor/index.ts";
 import { loadConfig } from "@cli/lib/config.ts";
-import type { MailMessage } from "@cli/types/mail.ts";
+import type { MailMessage, ThreadedMessage } from "@cli/types/mail.ts";
+import { threadMessages } from "../utils/thread-messages.ts";
 
 const POLL_MS = 2 * 60 * 1000;
 
 export interface InboxData {
   messages: MailMessage[];
+  threads: ThreadedMessage[];
   loading: boolean;
   error: string | null;
   lastRefresh: Date | null;
@@ -56,5 +58,7 @@ export function useInbox(): InboxData {
     return () => clearInterval(id);
   }, []);
 
-  return { messages, loading, error, lastRefresh, refresh: fetchMessages };
+  const threads = useMemo(() => threadMessages(messages), [messages]);
+
+  return { messages, threads, loading, error, lastRefresh, refresh: fetchMessages };
 }

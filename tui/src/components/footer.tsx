@@ -18,6 +18,7 @@ export function Footer({ view, lastRefresh, loading, lastModified }: Props) {
   const tabDest = view === "inbox" ? "calendar" : "inbox";
   const hints = [
     h("j/k", "move"),
+    ...(view === "inbox" ? [h("Enter", "expand")] : []),
     h("Tab", tabDest),
     h("r", "refresh"),
     h("^Q", "quit"),

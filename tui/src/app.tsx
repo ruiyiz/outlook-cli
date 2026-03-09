@@ -46,7 +46,7 @@ export function App({ lastModified }: { lastModified: Date }) {
         <Header unreadCount={unreadCount} loading={currentLoading} />
         <Box flexDirection="column" flexGrow={1} overflow="hidden">
           {state.view === "inbox" ? (
-            <InboxView {...inbox} viewportHeight={viewportHeight} />
+            <InboxView threads={inbox.threads} loading={inbox.loading} error={inbox.error} viewportHeight={viewportHeight} />
           ) : (
             <CalendarView {...calendar} viewportHeight={viewportHeight} />
           )}
