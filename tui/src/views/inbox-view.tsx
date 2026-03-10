@@ -135,8 +135,7 @@ export function InboxView({ threads, loading, error, viewportHeight, isActive }:
       return;
     }
 
-    dispatch({ type: "SET_CURSOR", index: newCursor });
-    dispatch({ type: "SET_SCROLL", offset: adjustScroll(newCursor, state.scrollOffset) });
+    dispatch({ type: "SET_CURSOR_AND_SCROLL", index: newCursor, offset: adjustScroll(newCursor, state.scrollOffset) });
   }, { isActive });
 
   const scrollOffset = adjustScroll(state.cursorIndex, state.scrollOffset);

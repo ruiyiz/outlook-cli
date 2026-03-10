@@ -17,6 +17,7 @@ export type Action =
   | { type: "SWITCH_VIEW" }
   | { type: "SET_CURSOR"; index: number }
   | { type: "SET_SCROLL"; offset: number }
+  | { type: "SET_CURSOR_AND_SCROLL"; index: number; offset: number }
   | { type: "OPEN_READING"; entryId: string; threadMessages: MailMessage[] }
   | { type: "CLOSE_READING" }
   | { type: "SET_READING_SCROLL"; offset: number };
@@ -51,6 +52,8 @@ export function reducer(state: AppState, action: Action): AppState {
       return { ...state, cursorIndex: action.index };
     case "SET_SCROLL":
       return { ...state, scrollOffset: action.offset };
+    case "SET_CURSOR_AND_SCROLL":
+      return { ...state, cursorIndex: action.index, scrollOffset: action.offset };
     case "OPEN_READING":
       return {
         ...state,

@@ -41,7 +41,8 @@ export function App({ lastModified }: { lastModified: Date }) {
   const currentLastRefresh = state.view === "inbox" ? inbox.lastRefresh : calendar.lastRefresh;
   // header: borderTop(1) + content(1) + borderBottom(1) = 3
   // footer: borderTop(1) + content(1) = 2
-  const viewportHeight = Math.max(1, (stdout.rows ?? 24) - 5);
+  // -1 extra to keep total output < stdout.rows, avoiding Ink's clearTerminal path (which flickers)
+  const viewportHeight = Math.max(1, (stdout.rows ?? 24) - 6);
 
   function handleCloseReading() {
     dispatch({ type: "CLOSE_READING" });
@@ -50,7 +51,7 @@ export function App({ lastModified }: { lastModified: Date }) {
 
   return (
     <AppContext.Provider value={{ state, dispatch }}>
-      <Box flexDirection="column" height={stdout.rows}>
+      <Box flexDirection="column" height={Math.max(1, (stdout.rows ?? 24) - 1)}>
         <Header unreadCount={unreadCount} loading={currentLoading} />
         <Box flexDirection="column" flexGrow={1} overflow="hidden">
           {isReading && (

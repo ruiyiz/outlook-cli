@@ -86,8 +86,7 @@ export function CalendarView({ events, loading, error, viewportHeight, isActive 
     // Find rendered line for new cursor position
     const newCursorRowIndex = rows.findIndex((r) => r.type === "event" && r.idx === newCursor);
     const newCursorRow = newCursorRowIndex >= 0 ? rowLines[newCursorRowIndex] : 0;
-    dispatch({ type: "SET_CURSOR", index: newCursor });
-    dispatch({ type: "SET_SCROLL", offset: adjustScroll(newCursorRow, state.scrollOffset) });
+    dispatch({ type: "SET_CURSOR_AND_SCROLL", index: newCursor, offset: adjustScroll(newCursorRow, state.scrollOffset) });
   }, { isActive });
 
   if (error) {
