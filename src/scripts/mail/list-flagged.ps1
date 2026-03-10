@@ -3,10 +3,6 @@ $namespace = $outlook.GetNamespace('MAPI')
 
 $folderName = {{folder}}
 $limit = {{limit}}
-$filterUnread = {{filterUnread}}
-$filterFrom = {{filterFrom}}
-$filterSubject = {{filterSubject}}
-$filterSince = {{filterSince}}
 
 # Get folder
 if ($folderName -eq 'Inbox' -or $folderName -eq '') {
@@ -21,7 +17,6 @@ if ($folderName -eq 'Inbox' -or $folderName -eq '') {
         if ($folder) { break }
     }
     if (-not $folder) {
-        # Try inbox subfolders
         foreach ($sf in $inbox.Folders) {
             if ($sf.Name -eq $folderName) { $folder = $sf; break }
         }
@@ -34,18 +29,14 @@ $items.Sort('[ReceivedTime]', $true)
 
 $results = @()
 $count = 0
+$scanned = 0
 
 foreach ($item in $items) {
     if ($count -ge $limit) { break }
+    if ($scanned -ge 10000) { break }
+    $scanned++
     if ($item.Class -ne 43) { continue }
-
-    if ($filterUnread -and -not $item.UnRead) { continue }
-    if ($filterFrom -ne '' -and $item.SenderEmailAddress -notlike "*$filterFrom*" -and $item.SenderName -notlike "*$filterFrom*") { continue }
-    if ($filterSubject -ne '' -and $item.Subject -notlike "*$filterSubject*") { continue }
-    if ($filterSince -ne '') {
-        $sinceDate = [DateTime]::Parse($filterSince)
-        if ($item.ReceivedTime -lt $sinceDate) { continue }
-    }
+    if ($item.FlagStatus -ne 2) { continue }
 
     $results += [PSCustomObject]@{
         EntryID             = $item.EntryID

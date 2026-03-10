@@ -39,6 +39,7 @@ function Get-MailObject($item) {
         AttachmentCount     = $item.Attachments.Count
         ConversationID      = $item.ConversationID
         ConversationTopic   = $item.ConversationTopic
+        FlagStatus          = $item.FlagStatus
     }
 }
 

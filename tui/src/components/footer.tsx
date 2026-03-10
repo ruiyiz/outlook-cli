@@ -16,13 +16,15 @@ function h(key: string, desc: string) {
 }
 
 export function Footer({ view, lastRefresh, loading, lastModified, isReading }: Props) {
-  const tabDest = view === "inbox" ? "calendar" : "inbox";
+  const tabCycle: Record<string, string> = { inbox: "flagged", flagged: "calendar", calendar: "inbox" };
+  const tabDest = tabCycle[view] ?? "inbox";
   const hints = isReading
     ? [h("j/k", "scroll"), h("Esc/q", "back")]
     : [
         h("j/k", "move"),
-        ...(view === "inbox" ? [h("Enter", "open/expand")] : []),
+        ...(view !== "calendar" ? [h("Enter", "open/expand")] : []),
         h("Tab", tabDest),
+        h("1/2/3", "tabs"),
         h("r", "refresh"),
         h("^Q", "quit"),
       ];

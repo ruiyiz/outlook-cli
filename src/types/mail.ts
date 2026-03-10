@@ -18,6 +18,7 @@ export interface MailMessage {
   FolderPath?: string;
   ConversationID?: string;
   ConversationTopic?: string;
+  FlagStatus?: number;
 }
 
 export interface ThreadedMessage {
@@ -29,6 +30,7 @@ export interface ThreadedMessage {
   messageCount: number;
   hasUnread: boolean;
   hasAttachments: boolean;
+  hasFlagged: boolean;
   importance: number;
   messages: MailMessage[];
 }

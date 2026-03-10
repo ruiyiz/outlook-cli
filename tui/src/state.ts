@@ -1,6 +1,6 @@
 import type { MailMessage } from "@cli/types/mail.ts";
 
-export type ViewName = "inbox" | "calendar";
+export type ViewName = "inbox" | "flagged" | "calendar";
 
 export interface AppState {
   view: ViewName;
@@ -15,6 +15,7 @@ export interface AppState {
 
 export type Action =
   | { type: "SWITCH_VIEW" }
+  | { type: "SWITCH_TO_VIEW"; view: ViewName }
   | { type: "SET_CURSOR"; index: number }
   | { type: "SET_SCROLL"; offset: number }
   | { type: "SET_CURSOR_AND_SCROLL"; index: number; offset: number }
@@ -36,7 +37,8 @@ export const initialState: AppState = {
 export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case "SWITCH_VIEW": {
-      const next: ViewName = state.view === "inbox" ? "calendar" : "inbox";
+      const cycle: ViewName[] = ["inbox", "flagged", "calendar"];
+      const next: ViewName = cycle[(cycle.indexOf(state.view) + 1) % cycle.length];
       const mem = { ...state.cursorMemory, [state.view]: state.cursorIndex };
       const smem = { ...state.scrollMemory, [state.view]: state.scrollOffset };
       return {
@@ -45,6 +47,19 @@ export function reducer(state: AppState, action: Action): AppState {
         cursorIndex: mem[next] ?? 0,
         cursorMemory: mem,
         scrollOffset: smem[next] ?? 0,
+        scrollMemory: smem,
+      };
+    }
+    case "SWITCH_TO_VIEW": {
+      if (action.view === state.view) return state;
+      const mem = { ...state.cursorMemory, [state.view]: state.cursorIndex };
+      const smem = { ...state.scrollMemory, [state.view]: state.scrollOffset };
+      return {
+        ...state,
+        view: action.view,
+        cursorIndex: mem[action.view] ?? 0,
+        cursorMemory: mem,
+        scrollOffset: smem[action.view] ?? 0,
         scrollMemory: smem,
       };
     }

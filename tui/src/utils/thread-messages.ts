@@ -26,6 +26,7 @@ export function threadMessages(messages: MailMessage[]): ThreadedMessage[] {
       messageCount: msgs.length,
       hasUnread: msgs.some((m) => m.Unread),
       hasAttachments: msgs.some((m) => m.HasAttachments),
+      hasFlagged: msgs.some((m) => m.FlagStatus === 2),
       importance: Math.max(...msgs.map((m) => m.Importance)),
       messages: msgs,
     });

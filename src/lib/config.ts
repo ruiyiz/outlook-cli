@@ -11,7 +11,7 @@ export interface Config {
 }
 
 const DEFAULTS: Config = {
-  defaultLimit: 20,
+  defaultLimit: 100,
   defaultFolder: "Inbox",
   powershellPath: "powershell.exe",
 };
