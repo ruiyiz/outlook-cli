@@ -1,9 +1,9 @@
-import React, { useEffect, useReducer, useRef } from "react";
+import React, { useEffect, useReducer, useRef, useState } from "react";
 import { Box, useApp, useInput, useStdout } from "ink";
 import { AppContext } from "./context.ts";
 import { reducer, initialState } from "./state.ts";
 import { Header } from "./components/header.tsx";
-import { Footer } from "./components/footer.tsx";
+import { HelpOverlay } from "./components/help-overlay.tsx";
 import { InboxView } from "./views/inbox-view.tsx";
 import { FlaggedView } from "./views/flagged-view.tsx";
 import { CalendarView } from "./views/calendar-view.tsx";
@@ -16,6 +16,7 @@ export function App({ lastModified }: { lastModified: Date }) {
   const { exit } = useApp();
   const { stdout } = useStdout();
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [showHelp, setShowHelp] = useState(false);
   const inbox = useInbox();
   const flagged = useFlagged();
   const flaggedLoadedRef = useRef(false);
@@ -37,6 +38,11 @@ export function App({ lastModified }: { lastModified: Date }) {
       exit();
       return;
     }
+    if (input === "?") {
+      setShowHelp((v) => !v);
+      return;
+    }
+    if (showHelp) return;
     if (isReading) return;
     if (key.tab) {
       dispatch({ type: "SWITCH_VIEW" });
@@ -56,9 +62,8 @@ export function App({ lastModified }: { lastModified: Date }) {
   const currentLoading = state.view === "calendar" ? calendar.loading : state.view === "flagged" ? flagged.loading : inbox.loading;
   const currentLastRefresh = state.view === "calendar" ? calendar.lastRefresh : state.view === "flagged" ? flagged.lastRefresh : inbox.lastRefresh;
   // header: borderTop(1) + content(1) + borderBottom(1) = 3
-  // footer: borderTop(1) + content(1) = 2
   // -1 extra to keep total output < stdout.rows, avoiding Ink's clearTerminal path (which flickers)
-  const viewportHeight = Math.max(1, (stdout.rows ?? 24) - 6);
+  const viewportHeight = Math.max(1, (stdout.rows ?? 24) - 4);
 
   function handleCloseReading() {
     dispatch({ type: "CLOSE_READING" });
@@ -68,27 +73,35 @@ export function App({ lastModified }: { lastModified: Date }) {
   return (
     <AppContext.Provider value={{ state, dispatch }}>
       <Box flexDirection="column" height={Math.max(1, (stdout.rows ?? 24) - 1)}>
-        <Header unreadCount={unreadCount} flaggedCount={flaggedCount} loading={currentLoading} />
-        <Box flexDirection="column" flexGrow={1} overflow="hidden">
-          {isReading && (
-            <ReadingView
-              entryId={state.readingEntryId!}
-              threadMessages={state.readingThreadMessages}
-              viewportHeight={viewportHeight}
-              onClose={handleCloseReading}
-            />
-          )}
-          <Box flexDirection="column" flexGrow={1} display={isReading || state.view !== "inbox" ? "none" : "flex"}>
-            <InboxView threads={inbox.threads} loading={inbox.loading} error={inbox.error} viewportHeight={viewportHeight} isActive={!isReading && state.view === "inbox"} />
+        <Header
+          unreadCount={unreadCount}
+          flaggedCount={flaggedCount}
+          loading={currentLoading}
+          lastRefresh={currentLastRefresh}
+        />
+        {showHelp ? (
+          <HelpOverlay onClose={() => setShowHelp(false)} />
+        ) : (
+          <Box flexDirection="column" flexGrow={1} overflow="hidden">
+            {isReading && (
+              <ReadingView
+                entryId={state.readingEntryId!}
+                threadMessages={state.readingThreadMessages}
+                viewportHeight={viewportHeight}
+                onClose={handleCloseReading}
+              />
+            )}
+            <Box flexDirection="column" flexGrow={1} display={isReading || state.view !== "inbox" ? "none" : "flex"}>
+              <InboxView threads={inbox.threads} loading={inbox.loading} error={inbox.error} viewportHeight={viewportHeight} isActive={!isReading && state.view === "inbox"} />
+            </Box>
+            <Box flexDirection="column" flexGrow={1} display={isReading || state.view !== "flagged" ? "none" : "flex"}>
+              <FlaggedView flaggedThreads={flagged.flaggedThreads} loading={flagged.loading} error={flagged.error} viewportHeight={viewportHeight} isActive={!isReading && state.view === "flagged"} />
+            </Box>
+            <Box flexDirection="column" flexGrow={1} display={isReading || state.view !== "calendar" ? "none" : "flex"}>
+              <CalendarView {...calendar} viewportHeight={viewportHeight} isActive={!isReading && state.view === "calendar"} />
+            </Box>
           </Box>
-          <Box flexDirection="column" flexGrow={1} display={isReading || state.view !== "flagged" ? "none" : "flex"}>
-            <FlaggedView flaggedThreads={flagged.flaggedThreads} loading={flagged.loading} error={flagged.error} viewportHeight={viewportHeight} isActive={!isReading && state.view === "flagged"} />
-          </Box>
-          <Box flexDirection="column" flexGrow={1} display={isReading || state.view !== "calendar" ? "none" : "flex"}>
-            <CalendarView {...calendar} viewportHeight={viewportHeight} isActive={!isReading && state.view === "calendar"} />
-          </Box>
-        </Box>
-        <Footer view={state.view} lastRefresh={currentLastRefresh} loading={currentLoading} lastModified={lastModified} isReading={isReading} />
+        )}
       </Box>
     </AppContext.Provider>
   );
